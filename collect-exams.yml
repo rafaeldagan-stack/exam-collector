@@ -4,9 +4,22 @@
   gather_facts: false
 
   tasks:
-    - name: Close Foxit PDF Reader
+
+    - name: Close exam applications if running
       ansible.windows.win_shell: |
-        Get-Process FoxitPDFReader -ErrorAction SilentlyContinue | Stop-Process
+        $process = Get-Process "{{ item }}" -ErrorAction SilentlyContinue
+        if ($process) {
+          $process | Stop-Process
+          Write-Output "{{ item }} closed"
+        }
+        else {
+          Write-Output "{{ item }} not running"
+        }
+      loop:
+        - FoxitPDFReader
+        - AcroRd32
+        - acad
+        - SketchUp
 
     - name: Find directories directly under D drive
       ansible.windows.win_find:
@@ -43,3 +56,11 @@
         dest: "/home/rafi/exam-collector/collected/{{ inventory_hostname }}/{{ item.0.item.filename }}/"
         flat: true
       loop: "{{ student_exam_files.results | subelements('files') }}"
+
+    - name: Show collection summary
+      ansible.builtin.debug:
+        msg:
+          - "Computer: {{ inventory_hostname }}"
+          - "Student folders found: {{ exam_dirs | length }}"
+          - "Exam files found: {{ student_exam_files.results | map(attribute='matched') | sum }}"
+          - "Collection status: SUCCESS"
