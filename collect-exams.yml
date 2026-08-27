@@ -4,6 +4,9 @@
   gather_facts: false
 
   tasks:
+    - name: Close Foxit PDF Reader
+      ansible.windows.win_shell: |
+        Get-Process FoxitPDFReader -ErrorAction SilentlyContinue | Stop-Process
 
     - name: Find directories directly under D drive
       ansible.windows.win_find:
