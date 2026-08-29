@@ -1,0 +1,58 @@
+---
+# Tasks for the Exam Collector role
+
+- name: Close exam applications if running
+  ansible.windows.win_shell: |
+    $process = Get-Process "{{ item }}" -ErrorAction SilentlyContinue
+    if ($process) {
+      $process | Stop-Process
+      Write-Output "{{ item }} closed"
+    }
+    else {
+      Write-Output "{{ item }} not running"
+    }
+  loop: "{{ exam_processes }}"
+
+- name: Find directories directly under exam drive
+  ansible.windows.win_find:
+    paths: "{{ exam_drive }}"
+    file_type: directory
+    recurse: false
+  register: all_dirs
+
+- name: Filter student exam directories
+  ansible.builtin.set_fact:
+    exam_dirs: >-
+      {{
+        all_dirs.files
+        | selectattr('filename', 'search', exam_folder_pattern)
+        | list
+      }}
+
+- name: Show matched exam directories
+  ansible.builtin.debug:
+    msg: "Exam directory found: {{ item.path }}"
+  loop: "{{ exam_dirs }}"
+
+- name: Find files inside exam directories
+  ansible.windows.win_find:
+    paths: "{{ item.path }}"
+    file_type: file
+    recurse: true
+  loop: "{{ exam_dirs }}"
+  register: student_exam_files
+
+- name: Collect exam files
+  ansible.builtin.fetch:
+    src: "{{ item.1.path }}"
+    dest: "{{ collection_root }}/{{ inventory_hostname }}/{{ item.0.item.filename }}/"
+    flat: true
+  loop: "{{ student_exam_files.results | subelements('files') }}"
+
+- name: Show collection summary
+  ansible.builtin.debug:
+    msg:
+      - "Computer: {{ inventory_hostname }}"
+      - "Student folders found: {{ exam_dirs | length }}"
+      - "Exam files found: {{ student_exam_files.results | map(attribute='matched') | sum }}"
+      - "Collection status: SUCCESS"

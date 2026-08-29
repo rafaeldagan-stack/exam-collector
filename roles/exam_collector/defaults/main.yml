@@ -1,0 +1,14 @@
+---
+# Default settings for the Exam Collector role
+
+exam_drive: 'D:\'
+
+exam_folder_pattern: '[0-9]{9}$'
+
+exam_processes:
+  - FoxitPDFReader
+  - AcroRd32
+  - acad
+  - SketchUp
+
+collection_root: '/home/rafi/exam-collector/collected'
