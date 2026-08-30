@@ -42,6 +42,23 @@
   loop: "{{ exam_dirs }}"
   register: student_exam_files
 
+- name: Calculate exam collection statistics
+  ansible.builtin.set_fact:
+    total_exam_files: >-
+      {{
+        student_exam_files.results
+        | map(attribute='matched')
+        | sum
+      }}
+    total_exam_bytes: >-
+      {{
+        student_exam_files.results
+        | map(attribute='files')
+        | flatten
+        | map(attribute='size')
+        | sum
+      }}
+
 - name: Collect exam files
   ansible.builtin.fetch:
     src: "{{ item.1.path }}"
@@ -54,5 +71,25 @@
     msg:
       - "Computer: {{ inventory_hostname }}"
       - "Student folders found: {{ exam_dirs | length }}"
-      - "Exam files found: {{ student_exam_files.results | map(attribute='matched') | sum }}"
-      - "Collection status: SUCCESS"
+      - "Exam files found: {{ total_exam_files }}"
+      - "Total size: {{ total_exam_bytes }} bytes"
+      - "Total size MB: {{ (total_exam_bytes | float / 1024 / 1024) | round(2) }} MB"
+      - "Collection status: {{ 'WARNING - No exam files found!' if total_exam_files | int == 0 else 'SUCCESS' }}"
+- name: Save collection report
+  ansible.builtin.copy:
+    dest: "/home/rafi/exam-collector/reports/{{ inventory_hostname }}-report.txt"
+    content: |
+      Exam Collection Report
+      ======================
+      Collection time: {{ lookup('pipe', 'date "+%Y-%m-%d %H:%M:%S"') }}
+      Computer: {{ inventory_hostname }}
+      Student folder(s):
+      {% for student in exam_dirs %}
+      - {{ student.filename }} ({{ student.path }})
+      {% endfor %}
+      Student folders found: {{ exam_dirs | length }}
+      Exam files found: {{ total_exam_files }}
+      Total size: {{ total_exam_bytes }} bytes
+      Total size MB: {{ (total_exam_bytes | float / 1024 / 1024) | round(2) }} MB
+      Collection status: {{ 'WARNING - No exam files found!' if total_exam_files | int == 0 else 'SUCCESS' }}
+  delegate_to: localhost
