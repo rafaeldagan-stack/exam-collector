@@ -13,4 +13,5 @@ else
     exit 1
 fi
 
-ansible-playbook -i "$INVENTORY" collect-exams.yml
+
+ansible-playbook -i "$INVENTORY" collect-exams.yml --vault-password-file .vault_pass

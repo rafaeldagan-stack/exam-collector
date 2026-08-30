@@ -4,3 +4,4 @@ inventory-home.ini
 reports/
 cron-test.log
 exam-scheduler.log
+.vault_pass
