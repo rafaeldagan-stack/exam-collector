@@ -2,3 +2,4 @@ inventory.ini
 collected/
 inventory-home.ini
 reports/
+cron-test.log
