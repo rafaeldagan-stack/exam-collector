@@ -74,7 +74,7 @@
       - "Exam files found: {{ total_exam_files }}"
       - "Total size: {{ total_exam_bytes }} bytes"
       - "Total size MB: {{ (total_exam_bytes | float / 1024 / 1024) | round(2) }} MB"
-      - "Collection status: {{ 'WARNING - No exam files found!' if total_exam_files | int == 0 else 'SUCCESS' }}"
+      - "Collection status: {{ 'WARNING - Student folder not found!' if exam_dirs | length == 0 else ('WARNING - Student folder is empty!' if total_exam_files | int == 0 else 'SUCCESS - Exam files collected successfully') }}"
 - name: Save collection report
   ansible.builtin.copy:
     dest: "/home/rafi/exam-collector/reports/{{ inventory_hostname }}-report.txt"
@@ -91,5 +91,5 @@
       Exam files found: {{ total_exam_files }}
       Total size: {{ total_exam_bytes }} bytes
       Total size MB: {{ (total_exam_bytes | float / 1024 / 1024) | round(2) }} MB
-      Collection status: {{ 'WARNING - No exam files found!' if total_exam_files | int == 0 else 'SUCCESS' }}
+      Collection status: {{ 'WARNING - Student folder not found!' if exam_dirs | length == 0 else ('WARNING - Student folder is empty!' if total_exam_files | int == 0 else 'SUCCESS - Exam files collected successfully') }}
   delegate_to: localhost
